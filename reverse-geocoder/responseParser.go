@@ -3,6 +3,7 @@ package reversegeocoder
 import (
 	"encoding/json"
 	"fmt"
+	"generate-story-titles/geospatial"
 )
 
 type response struct {
@@ -20,21 +21,21 @@ type address struct {
 	Types     []string `json:"types"`
 }
 
-func (r *ReverseGeocoder) parseLocationResponse(resp string) (Location, error) {
+func (r *ReverseGeocoder) parseLocationResponse(resp string) (geospatial.Location, error) {
 	m := response{}
 
 	err := json.Unmarshal([]byte(resp), &m)
 	if err != nil {
-		return Location{}, fmt.Errorf("failed to parse request body - %s", err)
+		return geospatial.Location{}, fmt.Errorf("failed to parse request body - %s", err)
 	}
 
 	// Validate that the request actually succeeded
 	if m.Status != "OK" {
-		return Location{}, fmt.Errorf("failed to parse request body - %s", err)
+		return geospatial.Location{}, fmt.Errorf("failed to parse request body - %s", err)
 	}
 
 	// Extract the important parts of the address
-	location := Location{}
+	location := geospatial.Location{}
 	for i := range m.Results {
 		for p := range m.Results[i].AddressComponents {
 			for _, addType := range m.Results[i].AddressComponents[p].Types {

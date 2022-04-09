@@ -5,18 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"generate-story-titles/geospatial"
 )
-
-type Coordinates struct {
-	Lat float64
-	Lon float64
-}
-
-type Location struct {
-	Locality    string
-	Sublocality string
-	Country     string
-}
 
 type ReverseGeocoder struct {
 	APIKey string
@@ -35,19 +26,19 @@ func NewReverseGeocoder(apiKey string) (*ReverseGeocoder, error) {
 	}, nil
 }
 
-func (r *ReverseGeocoder) LocationFromLatLon(coords Coordinates) (Location, error) {
+func (r *ReverseGeocoder) LocationFromLatLon(coords geospatial.Coordinates) (geospatial.Location, error) {
 	url := fmt.Sprintf(APIURL, coords.Lat, coords.Lon, r.APIKey)
 
 	fmt.Println(url)
 
 	resp, err := r.sendHTTPRequest(http.MethodGet, url)
 	if err != nil {
-		return Location{}, err
+		return geospatial.Location{}, err
 	}
 
 	loc, err := r.parseLocationResponse(resp)
 	if err != nil {
-		return Location{}, err
+		return geospatial.Location{}, err
 	}
 
 	return loc, nil
