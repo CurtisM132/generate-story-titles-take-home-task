@@ -19,4 +19,5 @@
 1. Get the weather for trip duration and (if extreme) use it to influence the story title generation
 2. Get the cultural significance (if any) for trip duration use it to influence the story title generation
 3. Implement a better randomised system for story title generation
-4. Deal with unsanitised data in the datasets (CSV files)
+4. Add a config file and parser rather than having the API key lie in `main.go`
+5. Deal with unsanitised data in the datasets (CSV files)
