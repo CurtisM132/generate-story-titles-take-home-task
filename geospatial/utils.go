@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-const earthsRadius float64 = 6378100 // Earth radius in Metres
+const earthsRadius float64 = 6378100 // Metres
 
 func ToRadians(deg float64) float64 {
 	return float64(deg) * (math.Pi / 180.0)
@@ -22,20 +22,16 @@ func hsin(theta float64) float64 {
 
 // Distance returns the distance (in meters) between two points of a given longitude and latitude
 func Distance(firstCoord, secondCoord Coordinates) float64 {
-	// convert to radians
-	// must cast radius as float to multiply later
-	var la1, lo1, la2, lo2 float64
-	la1 = firstCoord.Lat * math.Pi / 180
-	lo1 = firstCoord.Lon * math.Pi / 180
-	la2 = secondCoord.Lat * math.Pi / 180
-	lo2 = secondCoord.Lon * math.Pi / 180
+	la1, lo1 := ToRadians(firstCoord.Lat), ToRadians(firstCoord.Lon)
+	la2, lo2 := ToRadians(secondCoord.Lat), ToRadians(secondCoord.Lon)
 
 	h := hsin(la2-la1) + math.Cos(la1)*math.Cos(la2)*hsin(lo2-lo1)
 
 	return 2 * earthsRadius * math.Asin(math.Sqrt(h))
 }
 
-func CalculateUpperAndLowerBounds(coordDataset []Coordinates) (smallestCoord, largestCoord Coordinates, err error) {
+// CalculateLowerAndUpperBounds calculates the 'smallest' and 'largest' coordinates in a dataset
+func CalculateLowerAndUpperBounds(coordDataset []Coordinates) (smallestCoord, largestCoord Coordinates, err error) {
 	if len(coordDataset) == 0 {
 		err = errors.New("no coordinates in dataset")
 		return
@@ -64,19 +60,19 @@ func CalculateUpperAndLowerBounds(coordDataset []Coordinates) (smallestCoord, la
 	return
 }
 
+// CalculateMidPoint calculates the exact midpoint of a set of coordinates
 func CalculateMidPoint(coordDataset []Coordinates) (Coordinates, error) {
 	if len(coordDataset) == 0 {
 		return Coordinates{}, errors.New("no coordinates in dataset")
 	}
 
-	sCoord, lCoord, err := CalculateUpperAndLowerBounds(coordDataset)
+	sCoord, lCoord, err := CalculateLowerAndUpperBounds(coordDataset)
 	if err != nil {
 		return Coordinates{}, err
 	}
 
 	dLon := ToRadians(lCoord.Lon - sCoord.Lon)
 
-	//convert to radians
 	lat1 := ToRadians(sCoord.Lat)
 	lat2 := ToRadians(lCoord.Lat)
 	lon1 := ToRadians(sCoord.Lon)
@@ -89,12 +85,14 @@ func CalculateMidPoint(coordDataset []Coordinates) (Coordinates, error) {
 	return Coordinates{Lat: ToDegrees(lat3), Lon: ToDegrees(lon3)}, nil
 }
 
+// CalculateSpread calculates the maximum spread (in metres) of a dataset
+// i.e., the distance between the smallest and largest coordinates
 func CalculateSpread(coordDataset []Coordinates) (float64, error) {
 	if len(coordDataset) == 0 {
 		return 0, errors.New("no coordinates in dataset")
 	}
 
-	sCoord, lCoord, err := CalculateUpperAndLowerBounds(coordDataset)
+	sCoord, lCoord, err := CalculateLowerAndUpperBounds(coordDataset)
 	if err != nil {
 		return 0, err
 	}
