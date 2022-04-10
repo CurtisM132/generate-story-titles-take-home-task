@@ -10,10 +10,9 @@ import (
 )
 
 type ReverseGeocoder struct {
-	APIKey string
+	apiKey string
 }
 
-// const APIURL = "https://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&result_type=sublocality|administrative_area_level_1|country&key=%s"
 const APIURL = "https://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&key=%s"
 
 func NewReverseGeocoder(apiKey string) (*ReverseGeocoder, error) {
@@ -22,21 +21,21 @@ func NewReverseGeocoder(apiKey string) (*ReverseGeocoder, error) {
 	}
 
 	return &ReverseGeocoder{
-		APIKey: apiKey,
+		apiKey: apiKey,
 	}, nil
 }
 
+// LocationFromLatLon Calls the Google API to reverse geocode a coordinate pair and returns a struct
+// containing the pertinent information
 func (r *ReverseGeocoder) LocationFromLatLon(coords geospatial.Coordinates) (geospatial.Location, error) {
-	url := fmt.Sprintf(APIURL, coords.Lat, coords.Lon, r.APIKey)
+	url := fmt.Sprintf(APIURL, coords.Lat, coords.Lon, r.apiKey)
 
-	fmt.Println(url)
-
-	resp, err := r.sendHTTPRequest(http.MethodGet, url)
+	resp, err := r.sendHTTPGETRequest(url)
 	if err != nil {
 		return geospatial.Location{}, err
 	}
 
-	loc, err := r.parseLocationResponse(resp)
+	loc, err := r.parseLocationResponseBody(resp)
 	if err != nil {
 		return geospatial.Location{}, err
 	}
@@ -44,21 +43,16 @@ func (r *ReverseGeocoder) LocationFromLatLon(coords geospatial.Coordinates) (geo
 	return loc, nil
 }
 
-func (r *ReverseGeocoder) sendHTTPRequest(reqType string, url string) (string, error) {
-	switch reqType {
-	case http.MethodGet:
-		resp, err := http.Get(url)
-		if err != nil {
-			return "", fmt.Errorf("failed to GET %s - %s", url, err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse response body from GET to %s - %s", url, err)
-		}
-
-		return string(body), nil
-	default:
-		return "", fmt.Errorf("unknown request type - %s", reqType)
+func (r *ReverseGeocoder) sendHTTPGETRequest(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to GET %s - %s", url, err)
 	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse response body from GET to %s - %s", url, err)
+	}
+
+	return string(body), nil
 }

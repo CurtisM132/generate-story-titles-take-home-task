@@ -21,32 +21,33 @@ type address struct {
 	Types     []string `json:"types"`
 }
 
-func (r *ReverseGeocoder) parseLocationResponse(resp string) (geospatial.Location, error) {
-	m := response{}
+// parseLocationResponseBody Takes the body of a reverse geocode response then extracts and returns the pertinent information
+func (r *ReverseGeocoder) parseLocationResponseBody(body string) (geospatial.Location, error) {
+	resp := response{}
 
-	err := json.Unmarshal([]byte(resp), &m)
+	err := json.Unmarshal([]byte(body), &resp)
 	if err != nil {
 		return geospatial.Location{}, fmt.Errorf("failed to parse request body - %s", err)
 	}
 
 	// Validate that the request actually succeeded
-	if m.Status != "OK" {
-		return geospatial.Location{}, fmt.Errorf("failed to parse request body - %s", err)
+	if resp.Status != "OK" {
+		return geospatial.Location{}, fmt.Errorf("request failed with status - %s", resp.Status)
 	}
 
 	// Extract the important parts of the address
 	location := geospatial.Location{}
-	for i := range m.Results {
-		for p := range m.Results[i].AddressComponents {
-			for _, addType := range m.Results[i].AddressComponents[p].Types {
+	for i := range resp.Results {
+		for p := range resp.Results[i].AddressComponents {
+			for _, addType := range resp.Results[i].AddressComponents[p].Types {
 				if addType == "locality" {
-					location.Locality = m.Results[i].AddressComponents[p].LongName
+					location.Locality = resp.Results[i].AddressComponents[p].LongName
 					break
-				} else if addType == "sublocality" {
-					location.Sublocality = m.Results[i].AddressComponents[p].LongName
+				} else if addType == "sublocality" || addType == "administrative_area_level_1" {
+					location.Sublocality = resp.Results[i].AddressComponents[p].LongName
 					break
 				} else if addType == "country" {
-					location.Country = m.Results[i].AddressComponents[p].LongName
+					location.Country = resp.Results[i].AddressComponents[p].LongName
 					break
 				}
 			}
